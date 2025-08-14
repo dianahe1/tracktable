@@ -290,27 +290,19 @@ def render_trajectories(trajectories,
                              tooltip=tooltip_str,
                              popup=popup_str).add_to(map_canvas)
             else: # mapped color (not solid) or animate
-                last_pos = coordinates[0]
-                for i, pos in enumerate(coordinates[1:]):
-                    weight = linewidth
-                    if trajectory_linewidth_generator:
-                        weight = widths[i]
-                    if solid:
-                        segment_color = current_color_map.colors[0]
-                    else:
-                        segment_color = rgb2hex(mapper.to_rgba(scalars[i]))
-                    if animate:
-                        segments.append({'coordinates': [[last_pos[1], last_pos[0]], [pos[1], pos[0]]],
-                                         'times': [times[i], times[i+1]], #i is off by one, so in first iter times[0] is the previous time
-                                         'color': segment_color,
-                                         'weight': weight
-                                     })
-                    else:
-                        fol.PolyLine([last_pos,pos],
-                                     color=segment_color, weight=weight,
-                                     opacity=1, tooltip=tooltip_str,
-                                     popup=popup_str).add_to(map_canvas)
-                    last_pos = pos
+                # converted current_color_map (type ListedColormap) to list of
+                # hex color strings for folium.ColorLine
+                current_colormap_list = [matplotlib.colors.to_hex(c) for c in current_color_map.colors]
+                # generate geometry using ColorLine instead of individual
+                # segments for each trajectory segment
+                fol.ColorLine(
+                    positions=coordinates,
+                    colors=scalars,
+                    colormap=current_colormap_list,
+                    weight=linewidth,
+                    opacity=1,
+                    tooltip=tooltip_str,
+                    popup=popup_str).add_to(map_canvas)
         if show_points:
             for coord_ind, c in enumerate(coordinates[:-1]): # all but last (dot)
                 point_radius = point_size
